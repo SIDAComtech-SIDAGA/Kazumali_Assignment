@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Performance Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+</head>
+<style>
+    .text-center {
+        text-align: center;
+    }
+</style>
+<body>
+    <div class="container">
+        <h2 class="text-center">Predict Student Performance</h2>
+        <form id="prediction-form">
+            <label for="study_time">Study Time (In hours):</label>
+            <input type="number" id="study_time" name="study_time" step="0.1" required>
+
+            <label for="failures">Failures:</label>
+            <input type="number" id="failures" name="failures" required>
+
+            <label for="absences">Absences:</label>
+            <input type="number" id="absences" name="absences" required>
+
+            <label for="famrel">Family Relationship (1-5):</label>
+            <input type="number" id="famrel" name="famrel" min="1" max="5" required>
+
+            <label for="internet">Internet Access (yes/no):</label>
+            <input type="text" id="internet" name="internet" required>
+
+            <button type="submit">Predict</button>
+        </form>
+    </div>
+
+    <div id="result-panel" class="result-panel">
+        <h3>Prediction Result</h3>
+        <p id="result-message"></p>
+    </div>
+
+    <script>
+        document.querySelector("form").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = {
+                study_time: formData.get("study_time"),
+                failures: formData.get("failures"),
+                absences: formData.get("absences"),
+                famrel: formData.get("famrel"),
+                internet: formData.get("internet")
+            };
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                    body: new URLSearchParams(data)
+                });
+
+                const result = await response.json();
+
+                const resultPanel = document.getElementById("result-panel");
+                const resultMessage = document.getElementById("result-message");
+
+                if (response.ok && result.predicted_grade !== undefined) {
+                    resultMessage.textContent = `Predicted Grade: ${result.predicted_grade}`;
+                } else {
+                    resultMessage.textContent = `Error: ${result.error || "Unknown error"}`;
+                }
+
+                resultPanel.classList.add("visible");
+
+                setTimeout(() => {
+                    resultPanel.classList.remove("visible");
+                }, 5000);
+            } catch (error) {
+                const resultPanel = document.getElementById("result-panel");
+                const resultMessage = document.getElementById("result-message");
+
+                resultMessage.textContent = `Unexpected Error: ${error.message}`;
+                resultPanel.classList.add("visible");
+
+                setTimeout(() => {
+                    resultPanel.classList.remove("visible");
+                }, 5000);
+            }
+        });
+    </script>
+</body>
+</html>
